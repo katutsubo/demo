@@ -267,11 +267,42 @@ async function search(query) {
 
 /*
 ----------------------------------------
+WebGPU 判定
+----------------------------------------
+*/
+
+function hasWebGPU() {
+    return typeof navigator !== "undefined"
+        && "gpu" in navigator;
+}
+
+/*
+----------------------------------------
 WebLLM
 ----------------------------------------
 */
 
+async function isWebGPUAvailable() {
+
+    if (!navigator.gpu) {
+        return false;
+    }
+
+    try {
+        const adapter =
+          await navigator.gpu.requestAdapter();
+        return !!adapter;
+    } catch {
+        return false;
+    }
+}
+
 async function initializeLLM() {
+
+    if (!(await isWebGPUAvailable())) {
+        engine = null;
+        return;
+    }
 
     engine =
       new webllm.MLCEngine();
@@ -291,6 +322,15 @@ async function ask(question) {
 
     const docs =
       await search(question);
+
+    // WebGPU 非対応など LLM が使えない場合は検索結果のみ返す
+    if (!engine) {
+        return {
+            docs,
+            answer:
+              "この環境では WebGPU が利用できないため、回答生成（LLM）はスキップしました。上位5件の関連データを表示します。"
+        };
+    }
 
     const context =
       docs
@@ -360,7 +400,9 @@ async () => {
         renderResults(docs);
 
         answerDiv.textContent =
-          answer;
+          answer
+            ? answer
+            : "（この環境ではWebGPUが利用できないため、AIによる回答生成はスキップし、検索結果のみ表示しています）";
 
     } catch(err) {
 
@@ -447,15 +489,27 @@ Startup
         `インデックス作成中... (${done}/${total})`;
     });
 
+    if (hasWebGPU()) {
+
+        document
+        .getElementById("answer")
+        .textContent =
+        "LLMロード中...(数GBダウンロードされます)";
+
+        try {
+            await initializeLLM();
+        } catch(err) {
+            console.warn("LLM初期化に失敗しました。検索のみで動作します。", err);
+            engine = undefined;
+        }
+    } else {
+        console.warn("WebGPU が利用できないため、AI回答生成を無効化し検索のみで動作します。");
+    }
+
     document
     .getElementById("answer")
     .textContent =
-    "LLMロード中...(数GBダウンロードされます)";
-
-    await initializeLLM();
-
-    document
-    .getElementById("answer")
-    .textContent =
-    "準備完了";
+    hasWebGPU() && engine
+        ? "準備完了"
+        : "準備完了（検索のみ・AI回答生成は無効）";
 })();
