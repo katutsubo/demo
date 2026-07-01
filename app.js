@@ -468,32 +468,27 @@ Startup
 ----------------------------------------
 */
 
-(async () => {
+async function prepare() {
 
-    document
-    .getElementById("answer")
-    .textContent =
+    const answerDiv =
+      document.getElementById("answer");
+
+    answerDiv.textContent =
     "Embedding初期化中...";
 
     await initializeEmbedding();
 
-    document
-    .getElementById("answer")
-    .textContent =
+    answerDiv.textContent =
     "インデックス作成中...";
 
     await buildIndex((done, total) => {
-        document
-        .getElementById("answer")
-        .textContent =
+        answerDiv.textContent =
         `インデックス作成中... (${done}/${total})`;
     });
 
     if (hasWebGPU()) {
 
-        document
-        .getElementById("answer")
-        .textContent =
+        answerDiv.textContent =
         "LLMロード中...(数GBダウンロードされます)";
 
         try {
@@ -506,10 +501,36 @@ Startup
         console.warn("WebGPU が利用できないため、AI回答生成を無効化し検索のみで動作します。");
     }
 
-    document
-    .getElementById("answer")
-    .textContent =
+    answerDiv.textContent =
     hasWebGPU() && engine
         ? "準備完了"
         : "準備完了（検索のみ・AI回答生成は無効）";
-})();
+
+    // 検索UIを有効化
+    document.getElementById("question").disabled = false;
+    document.getElementById("askButton").disabled = false;
+}
+
+document
+.getElementById("startButton")
+.addEventListener(
+"click",
+async () => {
+
+    const startButton =
+      document.getElementById("startButton");
+
+    startButton.disabled = true;
+    startButton.textContent = "準備中...";
+
+    try {
+        await prepare();
+        document.getElementById("setup").style.display = "none";
+    } catch(err) {
+        console.error(err);
+        document.getElementById("answer").textContent =
+          `準備中にエラーが発生しました: ${err.message}`;
+        startButton.disabled = false;
+        startButton.textContent = "準備を開始（データをダウンロード）";
+    }
+});

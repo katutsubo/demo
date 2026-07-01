@@ -67,6 +67,25 @@ ol.hits .score{
     margin-left:8px;
     color:#999;
 }
+
+#setup{
+    margin-top:20px;
+    padding:15px;
+    border:1px solid #f0c36d;
+    background:#fffdf5;
+    border-radius:4px;
+}
+
+#setup .notice{
+    margin:0 0 10px;
+    font-size:14px;
+    line-height:1.6;
+}
+
+button:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+}
 </style>
 </head>
 <body>
@@ -75,11 +94,21 @@ ol.hits .score{
 
 <p>e-Govデータポータルのメタデータを検索し、関連するデータセットの上位5件のURLを表示します。</p>
 
-<textarea id="question" placeholder="例: 人口に関する統計データはありますか？"></textarea>
+<div id="setup">
+  <p class="notice">
+    このデモを利用するには、Embeddingモデルや検索インデックス、AI回答生成用のLLM（環境により数GB）をダウンロードする必要があります。<br>
+    通信量とストレージを消費しますので、準備を開始する場合は以下のボタンを押してください。
+  </p>
+  <button id="startButton">
+    準備を開始（データをダウンロード）
+  </button>
+</div>
+
+<textarea id="question" placeholder="例: 人口に関する統計データはありますか？" disabled></textarea>
 
 <br>
 
-<button id="askButton">
+<button id="askButton" disabled>
 検索
 </button>
 
